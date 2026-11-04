@@ -1,1 +1,1300 @@
+-- ==============================================================================
+-- APOCALYPSE HUB - KEY SYSTEM + HWID + WEBHOOK + MODO ADMIN
+-- ==============================================================================
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
 
+local KEY_LINK = "https://discord.gg/CKJtRDSBK"
+local HWID_FILE = "ApocalypseHWID.json"
+local MAX_ATTEMPTS = 3
+local ADMIN_PASSWORD = "apocalypse_admin" -- Cámbiala por una segura
+
+local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1567556085202681898/nSSW0w3L9q-FBfiQtfx09R3pV3BHbKESIC1KLsX47IuwD8g51AalKrUJefyE5v1ApSfa"
+
+-- ===================== 50 KEYS VÁLIDAS =====================
+local VALID_KEYS = {
+    ["a7f3c9e2b1d8f4a6c0e5b9d2f7a3c8e1"] = true,
+    ["b4e8d1c6a9f2e7b3d0c5a8f1e6b9d4c7"] = true,
+    ["c1f6a3e9b8d4c7a2f5e0b6d9c3a8f1e4"] = true,
+    ["d8c2b7f4a1e6d9c3b0f5a8e2d7c4b9f6"] = true,
+    ["e5a9f1c6b3d8e2a7f0c4b9d5e1a6f3c8"] = true,
+    ["f2d7c4a9e6b1f8d3c0a5e9b2f7d4c1a6"] = true,
+    ["a9e3b6f1c8d4a7e2b9f5c0d6a3e8b1f4"] = true,
+    ["b6c1f8d3a0e7b4c9f2d5a8e1b6c3f0d7"] = true,
+    ["c3a8e5b2f9d6c1a4e7b0f3d8c5a2e9b6"] = true,
+    ["d0f5c2a7e4b9d6c3a8f1e5b2d9c6a3f0"] = true,
+    ["e7b2f9c4a1d8e5b0f6c3a9e2b7f4c1d6"] = true,
+    ["f4a1d6c9e2b7f0a5d8c3e6b9f2a7d4c1"] = true,
+    ["a1c8f5e2b9d4a7c0f6e3b8d1a5c2f9e6"] = true,
+    ["b8d3a0f7c4e1b6d9a2f5c8e3b0d7a4f1"] = true,
+    ["c5e0b7f2a9d6c3e8b1f4a0d7c2e9b6f3"] = true,
+    ["d2f9c6a3e0b7d4c1f8a5e2b9d6c3a0f7"] = true,
+    ["e9a4f1c8b5d2e7a0f6c3b9d4e1a8f5c2"] = true,
+    ["f6b1d8c5a2e9f4b7d0c6a3e8f1b4d9c2"] = true,
+    ["a3e8b5f0c7d4a1e6b9f2c8d5a0e7b3f6"] = true,
+    ["b0f7c2a9e6d3b8f1c4a7e0d9b2f5c8a1"] = true,
+    ["c7d4a1f8e5b2c9d6a3f0e7b4c1d8a5f2"] = true,
+    ["d4a9f6c3e0b7d2a8f5c1e6b3d0a7f4c9"] = true,
+    ["e1c6b3f0a7d4e9c2f5b8a1d6e3c0f7b4"] = true,
+    ["f8b5e2c9a6d1f4b0e7c3a8d5f2b9e6c1"] = true,
+    ["a5d0c7f4e1b8a3d6c9f2e5b0a7d4c1f8"] = true,
+    ["b2e9f6c1a8d5b0e3f7c4a9d2e6b1f8c5"] = true,
+    ["c9f4a1e8b5d2c7f0a6e3b9d4c1f8a5e2"] = true,
+    ["d6a3e0b7f2c9d4a1e8b5f0c6d3a9e2b7"] = true,
+    ["e3c8f5a2d9b6e1c4f7a0d8b3e6c9f2a5"] = true,
+    ["f0b7d2c5a8e1f6b3d9c4a7e0f5b2d8c1"] = true,
+    ["a8e1c6f3b0d7a4e9c2f5b8d1a6e3c0f7"] = true,
+    ["b5f2d9c4a1e8b6f0d3c7a2e9b4f1d6c0"] = true,
+    ["c2a7e4b1f8d5c0a6e3b9f2d7c4a1e8b5"] = true,
+    ["d9c4f1a6e3b0d7c2f8a5e1b6d9c0f4a7"] = true,
+    ["e6b9d2c5a8f1e4b7d0c3a9f6e2b5d8c1"] = true,
+    ["f3a0e7c2b9d4f1a6e8c5b0d7f2a9e4c6"] = true,
+    ["a0d5c8f1e6b3a9d2c7f4e0b6a1d8c5f2"] = true,
+    ["b7e2f9c4a0d6b1e8f3c9a5d0e7b2f6c1"] = true,
+    ["c4a9d6e1b8f5c2a7d0e3b9f4c1a6e8d5"] = true,
+    ["d1f6c3a8e5b0d7c4a9f2e6b1d8c5a0f3"] = true,
+    ["e8b3f0c5a2d9e6b1f4c7a0d3e9b6f2c8"] = true,
+    ["f5c0a7d2e9b4f1c6a3e8d0b7f4c9a2e5"] = true,
+    ["a2e7b4f9c6d1a8e3b0f5c2d9a4e7b1f6"] = true,
+    ["b9d4c1f6a3e0b7d2c8f5a1e6b9d0c4f7"] = true,
+    ["c6a1e8b5f2d9c4a0e7b3f6d1c8a5e2b9"] = true,
+    ["d3f8c5a0e6b1d9c2f7a4e0b8d5c1a6f9"] = true,
+    ["e0b5d2c7a4f9e1b6d8c3a0f5e2b7d4c1"] = true,
+    ["f7c2a9e4b0d5f8c1a6e3b9d2f0c7a4e8"] = true,
+    ["a4e9b6f1c8d3a0e5b2f7c4d9a1e6b0f5"] = true,
+    ["b1d6c3f0a7e2b9d4c8f5a0e6b3d1c7f4"] = true,
+}
+
+-- ===================== FUNCIONES DE KEY SYSTEM =====================
+local function getHWID()
+    local success, hwid = pcall(function()
+        return game:GetService("RbxAnalyticsService"):GetClientId()
+    end)
+    if success and hwid and hwid ~= "" then
+        return hwid
+    end
+    return HttpService:GenerateGUID(false):gsub("-", ""):sub(1, 32)
+end
+
+local function loadBindings()
+    if isfile and isfile(HWID_FILE) then
+        local success, data = pcall(function()
+            return HttpService:JSONDecode(readfile(HWID_FILE))
+        end)
+        if success and type(data) == "table" then
+            return data
+        end
+    end
+    return {}
+end
+
+local function saveBindings(data)
+    if writefile then
+        pcall(function()
+            writefile(HWID_FILE, HttpService:JSONEncode(data))
+        end)
+    end
+end
+
+local function sendWebhook(title, description, color)
+    local data = {
+        embeds = {{
+            title = title,
+            description = description,
+            color = color or 16711680,
+            footer = { text = "Apocalypse Hub • Key System" },
+            timestamp = DateTime.now():ToIsoDate()
+        }}
+    }
+    pcall(function()
+        request({
+            Url = DISCORD_WEBHOOK,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = HttpService:JSONEncode(data)
+        })
+    end)
+end
+
+-- ===================== VARIABLES DE KEY SYSTEM =====================
+local attempts = 0
+local keyVerified = false
+local isProcessing = false
+local currentHWID = getHWID()
+local bindings = loadBindings()
+local adminMode = false
+
+-- ===================== CREAR GUI DE KEY SYSTEM =====================
+local KeyGui = Instance.new("ScreenGui")
+KeyGui.Name = "ApocalypseKeySystem"
+KeyGui.Parent = CoreGui
+KeyGui.IgnoreGuiInset = true
+KeyGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 440, 0, 290)
+MainFrame.Position = UDim2.new(0.5, -220, 0.5, -145)
+MainFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = KeyGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(0, 255, 140)
+UIStroke.Thickness = 1.5
+UIStroke.Transparency = 0.25
+UIStroke.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 42)
+Title.Position = UDim2.new(0, 0, 0, 14)
+Title.BackgroundTransparency = 1
+Title.Text = "APOCALYPSE HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 22
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(1, 0, 0, 20)
+Subtitle.Position = UDim2.new(0, 0, 0, 52)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "Key System + HWID Protection"
+Subtitle.TextColor3 = Color3.fromRGB(140, 140, 150)
+Subtitle.TextSize = 13
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.Parent = MainFrame
+
+local TextBox = Instance.new("TextBox")
+TextBox.Size = UDim2.new(0, 380, 0, 42)
+TextBox.Position = UDim2.new(0.5, -190, 0, 90)
+TextBox.BackgroundColor3 = Color3.fromRGB(26, 26, 30)
+TextBox.BorderSizePixel = 0
+TextBox.PlaceholderText = "Pega tu key de 32 caracteres..."
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.fromRGB(240, 240, 240)
+TextBox.PlaceholderColor3 = Color3.fromRGB(90, 90, 100)
+TextBox.TextSize = 14
+TextBox.Font = Enum.Font.Code
+TextBox.ClearTextOnFocus = false
+TextBox.Parent = MainFrame
+
+local BoxCorner = Instance.new("UICorner")
+BoxCorner.CornerRadius = UDim.new(0, 8)
+BoxCorner.Parent = TextBox
+
+local BoxStroke = Instance.new("UIStroke")
+BoxStroke.Color = Color3.fromRGB(45, 45, 55)
+BoxStroke.Thickness = 1
+BoxStroke.Parent = TextBox
+
+local CheckBtn = Instance.new("TextButton")
+CheckBtn.Size = UDim2.new(0, 185, 0, 40)
+CheckBtn.Position = UDim2.new(0.5, -190, 0, 150)
+CheckBtn.BackgroundColor3 = Color3.fromRGB(0, 220, 120)
+CheckBtn.BorderSizePixel = 0
+CheckBtn.Text = "VERIFICAR"
+CheckBtn.TextColor3 = Color3.fromRGB(10, 10, 10)
+CheckBtn.TextSize = 14
+CheckBtn.Font = Enum.Font.GothamBold
+CheckBtn.Parent = MainFrame
+
+local BtnCorner1 = Instance.new("UICorner")
+BtnCorner1.CornerRadius = UDim.new(0, 8)
+BtnCorner1.Parent = CheckBtn
+
+local GetKeyBtn = Instance.new("TextButton")
+GetKeyBtn.Size = UDim2.new(0, 185, 0, 40)
+GetKeyBtn.Position = UDim2.new(0.5, 5, 0, 150)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+GetKeyBtn.BorderSizePixel = 0
+GetKeyBtn.Text = "OBTENER KEY"
+GetKeyBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+GetKeyBtn.TextSize = 14
+GetKeyBtn.Font = Enum.Font.GothamBold
+GetKeyBtn.Parent = MainFrame
+
+local BtnCorner2 = Instance.new("UICorner")
+BtnCorner2.CornerRadius = UDim.new(0, 8)
+BtnCorner2.Parent = GetKeyBtn
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -40, 0, 22)
+StatusLabel.Position = UDim2.new(0, 20, 0, 210)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Ingresa una key válida para continuar"
+StatusLabel.TextColor3 = Color3.fromRGB(130, 130, 140)
+StatusLabel.TextSize = 12
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = MainFrame
+
+local AttemptsLabel = Instance.new("TextLabel")
+AttemptsLabel.Size = UDim2.new(1, -40, 0, 18)
+AttemptsLabel.Position = UDim2.new(0, 20, 0, 235)
+AttemptsLabel.BackgroundTransparency = 1
+AttemptsLabel.Text = "Intentos restantes: " .. MAX_ATTEMPTS
+AttemptsLabel.TextColor3 = Color3.fromRGB(100, 100, 110)
+AttemptsLabel.TextSize = 11
+AttemptsLabel.Font = Enum.Font.Gotham
+AttemptsLabel.TextXAlignment = Enum.TextXAlignment.Left
+AttemptsLabel.Parent = MainFrame
+
+-- Panel de Admin
+local AdminFrame = Instance.new("Frame")
+AdminFrame.Size = UDim2.new(0, 440, 0, 340)
+AdminFrame.Position = UDim2.new(0.5, -220, 0.5, -170)
+AdminFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+AdminFrame.BorderSizePixel = 0
+AdminFrame.Visible = false
+AdminFrame.Parent = KeyGui
+
+local AdminCorner = Instance.new("UICorner")
+AdminCorner.CornerRadius = UDim.new(0, 12)
+AdminCorner.Parent = AdminFrame
+
+local AdminStroke = Instance.new("UIStroke")
+AdminStroke.Color = Color3.fromRGB(255, 170, 0)
+AdminStroke.Thickness = 1.5
+AdminStroke.Parent = AdminFrame
+
+local AdminTitle = Instance.new("TextLabel")
+AdminTitle.Size = UDim2.new(1, 0, 0, 40)
+AdminTitle.Position = UDim2.new(0, 0, 0, 10)
+AdminTitle.BackgroundTransparency = 1
+AdminTitle.Text = "MODO ADMINISTRADOR"
+AdminTitle.TextColor3 = Color3.fromRGB(255, 170, 0)
+AdminTitle.TextSize = 20
+AdminTitle.Font = Enum.Font.GothamBold
+AdminTitle.Parent = AdminFrame
+
+local KeyInput = Instance.new("TextBox")
+KeyInput.Size = UDim2.new(0, 380, 0, 36)
+KeyInput.Position = UDim2.new(0.5, -190, 0, 60)
+KeyInput.BackgroundColor3 = Color3.fromRGB(26, 26, 30)
+KeyInput.BorderSizePixel = 0
+KeyInput.PlaceholderText = "Key que quieres reservar..."
+KeyInput.Text = ""
+KeyInput.TextColor3 = Color3.fromRGB(240, 240, 240)
+KeyInput.PlaceholderColor3 = Color3.fromRGB(90, 90, 100)
+KeyInput.TextSize = 13
+KeyInput.Font = Enum.Font.Code
+KeyInput.Parent = AdminFrame
+Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 8)
+
+local HWIDInput = Instance.new("TextBox")
+HWIDInput.Size = UDim2.new(0, 380, 0, 36)
+HWIDInput.Position = UDim2.new(0.5, -190, 0, 110)
+HWIDInput.BackgroundColor3 = Color3.fromRGB(26, 26, 30)
+HWIDInput.BorderSizePixel = 0
+HWIDInput.PlaceholderText = "HWID a reservar (deja vacío para usar el tuyo)..."
+HWIDInput.Text = ""
+HWIDInput.TextColor3 = Color3.fromRGB(240, 240, 240)
+HWIDInput.PlaceholderColor3 = Color3.fromRGB(90, 90, 100)
+HWIDInput.TextSize = 13
+HWIDInput.Font = Enum.Font.Code
+HWIDInput.Parent = AdminFrame
+Instance.new("UICorner", HWIDInput).CornerRadius = UDim.new(0, 8)
+
+local ReserveBtn = Instance.new("TextButton")
+ReserveBtn.Size = UDim2.new(0, 185, 0, 38)
+ReserveBtn.Position = UDim2.new(0.5, -190, 0, 165)
+ReserveBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
+ReserveBtn.BorderSizePixel = 0
+ReserveBtn.Text = "RESERVAR HWID"
+ReserveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ReserveBtn.TextSize = 13
+ReserveBtn.Font = Enum.Font.GothamBold
+ReserveBtn.Parent = AdminFrame
+Instance.new("UICorner", ReserveBtn).CornerRadius = UDim.new(0, 8)
+
+local RemoveBtn = Instance.new("TextButton")
+RemoveBtn.Size = UDim2.new(0, 185, 0, 38)
+RemoveBtn.Position = UDim2.new(0.5, 5, 0, 165)
+RemoveBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+RemoveBtn.BorderSizePixel = 0
+RemoveBtn.Text = "ELIMINAR RESERVA"
+RemoveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RemoveBtn.TextSize = 13
+RemoveBtn.Font = Enum.Font.GothamBold
+RemoveBtn.Parent = AdminFrame
+Instance.new("UICorner", RemoveBtn).CornerRadius = UDim.new(0, 8)
+
+local AdminStatus = Instance.new("TextLabel")
+AdminStatus.Size = UDim2.new(1, -40, 0, 40)
+AdminStatus.Position = UDim2.new(0, 20, 0, 220)
+AdminStatus.BackgroundTransparency = 1
+AdminStatus.Text = "Escribe una key y un HWID para reservar"
+AdminStatus.TextColor3 = Color3.fromRGB(180, 180, 190)
+AdminStatus.TextSize = 12
+AdminStatus.Font = Enum.Font.Gotham
+AdminStatus.TextXAlignment = Enum.TextXAlignment.Left
+AdminStatus.TextWrapped = true
+AdminStatus.Parent = AdminFrame
+
+local CloseAdminBtn = Instance.new("TextButton")
+CloseAdminBtn.Size = UDim2.new(0, 380, 0, 36)
+CloseAdminBtn.Position = UDim2.new(0.5, -190, 0, 275)
+CloseAdminBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+CloseAdminBtn.BorderSizePixel = 0
+CloseAdminBtn.Text = "CERRAR PANEL ADMIN"
+CloseAdminBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+CloseAdminBtn.TextSize = 13
+CloseAdminBtn.Font = Enum.Font.GothamBold
+CloseAdminBtn.Parent = AdminFrame
+Instance.new("UICorner", CloseAdminBtn).CornerRadius = UDim.new(0, 8)
+
+local function setStatus(text, color)
+    StatusLabel.Text = text
+    StatusLabel.TextColor3 = color
+end
+
+local function openAdminPanel()
+    MainFrame.Visible = false
+    AdminFrame.Visible = true
+    adminMode = true
+    HWIDInput.Text = currentHWID
+end
+
+local function closeAdminPanel()
+    AdminFrame.Visible = false
+    MainFrame.Visible = true
+    adminMode = false
+    TextBox.Text = ""
+    setStatus("Ingresa una key válida para continuar", Color3.fromRGB(130, 130, 140))
+end
+
+GetKeyBtn.MouseButton1Click:Connect(function()
+    if isProcessing then return end
+    pcall(function()
+        setclipboard(KEY_LINK)
+        setStatus("✓ Enlace de Discord copiado", Color3.fromRGB(0, 220, 120))
+    end)
+end)
+
+CheckBtn.MouseButton1Click:Connect(function()
+    if isProcessing or keyVerified then return end
+    isProcessing = true
+
+    local input = string.gsub(TextBox.Text, "%s+", "")
+
+    if input == ADMIN_PASSWORD then
+        openAdminPanel()
+        isProcessing = false
+        return
+    end
+
+    local inputKey = input:lower()
+
+    if #inputKey ~= 32 then
+        attempts += 1
+        AttemptsLabel.Text = "Intentos restantes: " .. (MAX_ATTEMPTS - attempts)
+        setStatus("La key debe tener exactamente 32 caracteres", Color3.fromRGB(255, 80, 80))
+        if attempts >= MAX_ATTEMPTS then
+            setStatus("Demasiados intentos. Expulsando...", Color3.fromRGB(255, 50, 50))
+            task.wait(1.3)
+            pcall(function() LocalPlayer:Kick("[APOCALYPSE HUB] Demasiados intentos fallidos.") end)
+        end
+        isProcessing = false
+        return
+    end
+
+    if not VALID_KEYS[inputKey] then
+        attempts += 1
+        AttemptsLabel.Text = "Intentos restantes: " .. (MAX_ATTEMPTS - attempts)
+        setStatus("Key inválida o no registrada", Color3.fromRGB(255, 80, 80))
+        if attempts >= MAX_ATTEMPTS then
+            setStatus("Límite de intentos alcanzado. Expulsando...", Color3.fromRGB(255, 50, 50))
+            task.wait(1.3)
+            pcall(function() LocalPlayer:Kick("[APOCALYPSE HUB] Key inválida.") end)
+        end
+        isProcessing = false
+        return
+    end
+
+    local boundHWID = bindings[inputKey]
+
+    if boundHWID then
+        if boundHWID == currentHWID then
+            keyVerified = true
+            setStatus("✓ Key válida + HWID correcto. Cargando...", Color3.fromRGB(0, 220, 120))
+            AttemptsLabel.Text = "Acceso concedido"
+        else
+            setStatus("Esta key ya está vinculada a otro dispositivo", Color3.fromRGB(255, 60, 60))
+            sendWebhook("⚠️ Intento de uso de Key ajena",
+                "**Key:** `" .. inputKey .. "`\n**Usuario:** " .. LocalPlayer.Name .. "\n**UserId:** " .. LocalPlayer.UserId .. "\n**HWID del intento:** `" .. currentHWID .. "`\n**HWID original:** `" .. boundHWID .. "`",
+                16711680)
+            task.wait(1.8)
+            pcall(function() LocalPlayer:Kick("[APOCALYPSE HUB] Esta key ya está en uso en otro dispositivo.") end)
+            isProcessing = false
+            return
+        end
+    else
+        bindings[inputKey] = currentHWID
+        saveBindings(bindings)
+        keyVerified = true
+        setStatus("✓ Key vinculada a este dispositivo. Cargando...", Color3.fromRGB(0, 220, 120))
+        AttemptsLabel.Text = "Key registrada correctamente"
+        sendWebhook("✅ Nueva Key vinculada",
+            "**Key:** `" .. inputKey .. "`\n**Usuario:** " .. LocalPlayer.Name .. "\n**UserId:** " .. LocalPlayer.UserId .. "\n**HWID:** `" .. currentHWID .. "`",
+            5763719)
+    end
+
+    task.wait(1)
+    local tweenOut = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.5, -220, 0.5, -170)
+    })
+    tweenOut:Play()
+    tweenOut.Completed:Wait()
+    KeyGui:Destroy()
+    isProcessing = false
+end)
+
+ReserveBtn.MouseButton1Click:Connect(function()
+    local key = string.gsub(KeyInput.Text, "%s+", ""):lower()
+    local hwid = string.gsub(HWIDInput.Text, "%s+", "")
+
+    if #key ~= 32 then
+        AdminStatus.Text = "Error: La key debe tener 32 caracteres"
+        AdminStatus.TextColor3 = Color3.fromRGB(255, 80, 80)
+        return
+    end
+
+    if not VALID_KEYS[key] then
+        AdminStatus.Text = "Error: Esa key no existe en la lista de keys válidas"
+        AdminStatus.TextColor3 = Color3.fromRGB(255, 80, 80)
+        return
+    end
+
+    if hwid == "" then
+        hwid = currentHWID
+    end
+
+    bindings[key] = hwid
+    saveBindings(bindings)
+
+    AdminStatus.Text = "✓ Key reservada correctamente\nKey: " .. key .. "\nHWID: " .. hwid
+    AdminStatus.TextColor3 = Color3.fromRGB(0, 220, 120)
+
+    sendWebhook("🔒 Key Reservada (Admin)",
+        "**Key:** `" .. key .. "`\n**HWID Reservado:** `" .. hwid .. "`\n**Admin:** " .. LocalPlayer.Name,
+        16753920)
+end)
+
+RemoveBtn.MouseButton1Click:Connect(function()
+    local key = string.gsub(KeyInput.Text, "%s+", ""):lower()
+
+    if #key ~= 32 then
+        AdminStatus.Text = "Error: Escribe la key que quieres liberar"
+        AdminStatus.TextColor3 = Color3.fromRGB(255, 80, 80)
+        return
+    end
+
+    if bindings[key] then
+        bindings[key] = nil
+        saveBindings(bindings)
+        AdminStatus.Text = "✓ Reserva eliminada correctamente"
+        AdminStatus.TextColor3 = Color3.fromRGB(0, 220, 120)
+    else
+        AdminStatus.Text = "Esa key no tenía ninguna reserva"
+        AdminStatus.TextColor3 = Color3.fromRGB(255, 180, 50)
+    end
+end)
+
+CloseAdminBtn.MouseButton1Click:Connect(function()
+    closeAdminPanel()
+end)
+
+-- Esperar a que se verifique la key para continuar con el script principal
+repeat task.wait(0.25) until keyVerified
+
+-- ==============================================================================
+-- SCRIPT PRINCIPAL: AXE SKINCHANGER V2
+-- ==============================================================================
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local playerScripts = LocalPlayer:WaitForChild("PlayerScripts")
+local controllers = playerScripts:WaitForChild("Controllers")
+
+local EnumLibrary = require(ReplicatedStorage.Modules:WaitForChild("EnumLibrary", 10))
+if EnumLibrary then pcall(function() EnumLibrary:WaitForEnumBuilder() end) end
+
+local CosmeticLibrary = require(ReplicatedStorage.Modules:WaitForChild("CosmeticLibrary", 10))
+local ItemLibrary = require(ReplicatedStorage.Modules:WaitForChild("ItemLibrary", 10))
+local DataController = require(controllers:WaitForChild("PlayerDataController", 10))
+
+local equipped = {}
+local favorites = {}
+local currentCategory = "Skin"
+local selectedWeapon = nil
+local currentWeaponTab = "Primary"
+local showOnlyFavorites = false
+local isMinimized = false
+
+local WEAPON_CATEGORIES = {
+	Primary = {
+		"Assault Rifle", "Bow", "Burst Rifle", "Crossbow", "Distortion", "Energy Rifle",
+		"Flamethrower", "Grenade Launcher", "Gunblade", "Minigun", "Paintball Gun",
+		"Permafrost", "RPG", "Scepter", "Shotgun", "Sniper", "Wildcat"
+	},
+	Secondary = {
+		"Daggers", "Energy Pistols", "Exogun", "Flare Gun", "Glass Cannon", "Handgun",
+		"Revolver", "Shorty", "Slingshot", "Spray", "Uzi", "Warper"
+	},
+	Melee = {
+		"Battle Axe", "Chainsaw", "Fists", "Glast Shard", "Katana", "Knife",
+		"Maul", "Riot Shield", "Scythe", "Spear", "Trowel"
+	},
+	Utility = {
+		"Flashbang", "Freeze Ray", "Grenade", "Jump Pad", "Medkit", "Molotov",
+		"Satchel", "Smoke Grenade", "Subspace Tripmine", "War Horn", "Warpstone", "Grappler"
+	}
+}
+
+local function isWeaponCosmetic(name, cosmetic)
+	if not name then return false end
+	local n = tostring(name):lower()
+	local t = cosmetic and tostring(cosmetic.Type or ""):lower() or ""
+	if t:find("finisher") or t:find("emote") or t:find("dance") or t:find("kill") then return false end
+	if t == "skin" or t == "charm" or t == "wrap" or t == "wrapping" then return true end
+	if n:find("skin") or n:find("charm") or n:find("wrap") then return true end
+	if cosmetic and (cosmetic.Seed or cosmetic.ObjectID or cosmetic.Enum) then return true end
+	return false
+end
+
+local function cloneCosmetic(name, cosmeticType)
+	local base = CosmeticLibrary.Cosmetics[name]
+	if not base then return nil end
+	local data = {}
+	for k, v in pairs(base) do data[k] = v end
+	data.Name = name
+	data.Type = data.Type or cosmeticType or "Skin"
+	data.Seed = data.Seed or math.random(1, 999999)
+	if EnumLibrary then
+		local ok, enumId = pcall(function() return EnumLibrary:ToEnum(name) end)
+		if ok and enumId then
+			data.Enum = enumId
+			data.ObjectID = data.ObjectID or enumId
+		end
+	end
+	if data.Inverted == nil then data.Inverted = false end
+	if data.OnlyUseFavorites == nil then data.OnlyUseFavorites = false end
+	return data
+end
+
+local saveFile = "axe_skinchanger/config.json"
+
+local function saveConfig()
+	if not writefile then return end
+	pcall(function()
+		local config = { equipped = {}, favorites = favorites }
+		for weapon, cosmetics in pairs(equipped) do
+			config.equipped[weapon] = {}
+			for ctype, cdata in pairs(cosmetics) do
+				if cdata and cdata.Name then
+					config.equipped[weapon][ctype] = { name = cdata.Name, seed = cdata.Seed }
+				end
+			end
+		end
+		makefolder("axe_skinchanger")
+		writefile(saveFile, HttpService:JSONEncode(config))
+	end)
+end
+
+local function loadConfig()
+	if not (readfile and isfile and isfile(saveFile)) then return end
+	pcall(function()
+		local config = HttpService:JSONDecode(readfile(saveFile))
+		if config.equipped then
+			for weapon, cosmetics in pairs(config.equipped) do
+				equipped[weapon] = {}
+				for ctype, cdata in pairs(cosmetics) do
+					local cloned = cloneCosmetic(cdata.name, ctype)
+					if cloned then
+						cloned.Seed = cdata.seed or cloned.Seed
+						equipped[weapon][ctype] = cloned
+					end
+				end
+			end
+		end
+		if config.favorites then favorites = config.favorites end
+	end)
+end
+
+local originalOwns = CosmeticLibrary.OwnsCosmetic
+CosmeticLibrary.OwnsCosmetic = function(self, inventory, name, weapon)
+	if name:find("MISSING_") then return originalOwns(self, inventory, name, weapon) end
+	local cosmetic = CosmeticLibrary.Cosmetics[name]
+	if isWeaponCosmetic(name, cosmetic) then return true end
+	return originalOwns(self, inventory, name, weapon)
+end
+
+for _, funcName in pairs({"OwnsCosmeticNormally", "OwnsCosmeticUniversally", "OwnsCosmeticForWeapon"}) do
+	if CosmeticLibrary[funcName] then
+		CosmeticLibrary[funcName] = function(_, _, name)
+			local c = CosmeticLibrary.Cosmetics[name]
+			return isWeaponCosmetic(name, c)
+		end
+	end
+end
+
+local originalGet = DataController.Get
+DataController.Get = function(self, key)
+	local data = originalGet(self, key)
+	if key == "CosmeticInventory" then
+		local proxy = {}
+		for name, cosmetic in pairs(CosmeticLibrary.Cosmetics) do
+			if isWeaponCosmetic(name, cosmetic) then proxy[name] = true end
+		end
+		return setmetatable(proxy, {
+			__index = function(_, k)
+				local c = CosmeticLibrary.Cosmetics[k]
+				if isWeaponCosmetic(k, c) then return true end
+			end
+		})
+	end
+	return data
+end
+
+local originalGetWeaponData = DataController.GetWeaponData
+DataController.GetWeaponData = function(self, weaponName)
+	local data = originalGetWeaponData(self, weaponName)
+	if not data then return nil end
+	local merged = {}
+	for k, v in pairs(data) do merged[k] = v end
+	merged.Name = weaponName
+	if equipped[weaponName] then
+		for ctype, cdata in pairs(equipped[weaponName]) do
+			merged[ctype] = cdata
+		end
+	end
+	return merged
+end
+
+local function forceUpdateWeapon(weaponName)
+	pcall(function()
+		if DataController.CurrentData then
+			DataController.CurrentData:Replicate("WeaponInventory")
+		end
+	end)
+end
+
+local function equipCosmetic(name, ctype)
+	if not selectedWeapon then return end
+	equipped[selectedWeapon] = equipped[selectedWeapon] or {}
+	local cloned = cloneCosmetic(name, ctype)
+	if not cloned then return end
+	equipped[selectedWeapon][ctype] = cloned
+	forceUpdateWeapon(selectedWeapon)
+	saveConfig()
+	showNotify("✓ " .. name .. " → " .. selectedWeapon)
+end
+
+local function unequipCurrent()
+	if not selectedWeapon then return end
+	if equipped[selectedWeapon] then
+		equipped[selectedWeapon][currentCategory] = nil
+		if not next(equipped[selectedWeapon]) then equipped[selectedWeapon] = nil end
+		forceUpdateWeapon(selectedWeapon)
+		saveConfig()
+		showNotify("Removido de " .. selectedWeapon)
+	end
+end
+
+local function randomSkin()
+	if not selectedWeapon then return end
+	local list = {}
+	for name, cosmetic in pairs(CosmeticLibrary.Cosmetics) do
+		if isWeaponCosmetic(name, cosmetic) then
+			local t = tostring(cosmetic.Type or ""):lower()
+			local n = name:lower()
+			local match = false
+			if currentCategory == "Skin" and (t == "skin" or n:find("skin")) then match = true end
+			if currentCategory == "Charm" and (t == "charm" or n:find("charm")) then match = true end
+			if currentCategory == "Wrap" and (t == "wrap" or t == "wrapping" or n:find("wrap")) then match = true end
+			if match then table.insert(list, name) end
+		end
+	end
+	if #list > 0 then
+		equipCosmetic(list[math.random(1, #list)], currentCategory)
+	end
+end
+
+if hookmetamethod then
+	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+	local dataRemotes = remotes and remotes:FindFirstChild("Data")
+	local equipRemote = dataRemotes and dataRemotes:FindFirstChild("EquipCosmetic")
+	if equipRemote then
+		local old
+		old = hookmetamethod(game, "__namecall", function(self, ...)
+			if getnamecallmethod() ~= "FireServer" then return old(self, ...) end
+			local args = {...}
+			if self == equipRemote then
+				local weaponName, cosmeticType, cosmeticName = args[1], args[2], args[3]
+				if weaponName then
+					equipped[weaponName] = equipped[weaponName] or {}
+					if cosmeticName and cosmeticName ~= "None" and cosmeticName ~= "" then
+						local cloned = cloneCosmetic(cosmeticName, cosmeticType)
+						if cloned then equipped[weaponName][cosmeticType] = cloned end
+					else
+						equipped[weaponName][cosmeticType] = nil
+					end
+					task.defer(function()
+						forceUpdateWeapon(weaponName)
+						saveConfig()
+					end)
+				end
+				return
+			end
+			return old(self, ...)
+		end)
+	end
+end
+
+pcall(function()
+	local ClientItem = require(LocalPlayer.PlayerScripts.Modules.ClientReplicatedClasses.ClientFighter.ClientItem)
+	if ClientItem and ClientItem._CreateViewModel then
+		local original = ClientItem._CreateViewModel
+		ClientItem._CreateViewModel = function(self, viewmodelRef)
+			local weaponName = self.Name
+			local weaponPlayer = self.ClientFighter and self.ClientFighter.Player
+			if weaponPlayer == LocalPlayer and equipped[weaponName] and viewmodelRef then
+				local dataKey = self:ToEnum("Data")
+				local target = viewmodelRef[dataKey] or viewmodelRef.Data
+				if target then
+					if equipped[weaponName].Skin then
+						target[self:ToEnum("Skin") or "Skin"] = equipped[weaponName].Skin
+						target[self:ToEnum("Name") or "Name"] = equipped[weaponName].Skin.Name
+					end
+					if equipped[weaponName].Charm then
+						target[self:ToEnum("Charm") or "Charm"] = equipped[weaponName].Charm
+					end
+					if equipped[weaponName].Wrap then
+						target[self:ToEnum("Wrap") or "Wrap"] = equipped[weaponName].Wrap
+					end
+				end
+			end
+			return original(self, viewmodelRef)
+		end
+	end
+end)
+
+local MainGui = Instance.new("ScreenGui")
+MainGui.Name = "AxeSkinchangerUI"
+MainGui.ResetOnSpawn = false
+MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+MainGui.Parent = (gethui and gethui()) or CoreGui
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0, 90, 0, 32)
+ToggleBtn.Position = UDim2.new(0, 15, 0.5, -16)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+ToggleBtn.BorderSizePixel = 0
+ToggleBtn.Text = "Open"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextSize = 13
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.Parent = MainGui
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 360, 0, 440)
+MainFrame.Position = UDim2.new(0, 115, 0.5, -220)
+MainFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+MainFrame.Parent = MainGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 12)
+
+local TitleFix = Instance.new("Frame")
+TitleFix.Size = UDim2.new(1, 0, 0, 14)
+TitleFix.Position = UDim2.new(0, 0, 1, -14)
+TitleFix.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+TitleFix.BorderSizePixel = 0
+TitleFix.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -90, 1, 0)
+TitleLabel.Position = UDim2.new(0, 12, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "AXE SKINCHANGER"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 13
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 26, 0, 26)
+MinimizeBtn.Position = UDim2.new(1, -70, 0.5, -13)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+MinimizeBtn.BorderSizePixel = 0
+MinimizeBtn.Text = "–"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 15
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Parent = TitleBar
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 5)
+
+local VersionLabel = Instance.new("TextLabel")
+VersionLabel.Size = UDim2.new(0, 32, 0, 18)
+VersionLabel.Position = UDim2.new(1, -36, 0.5, -9)
+VersionLabel.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+VersionLabel.BorderSizePixel = 0
+VersionLabel.Text = "V2"
+VersionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+VersionLabel.TextSize = 10
+VersionLabel.Font = Enum.Font.GothamBold
+VersionLabel.Parent = TitleBar
+Instance.new("UICorner", VersionLabel).CornerRadius = UDim.new(0, 4)
+
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, 0, 1, -40)
+ContentFrame.Position = UDim2.new(0, 0, 0, 40)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+local WeaponPage = Instance.new("Frame")
+WeaponPage.Size = UDim2.new(1, 0, 1, 0)
+WeaponPage.BackgroundTransparency = 1
+WeaponPage.Parent = ContentFrame
+
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(1, -20, 0, 28)
+TabBar.Position = UDim2.new(0, 10, 0, 8)
+TabBar.BackgroundTransparency = 1
+TabBar.Parent = WeaponPage
+
+local tabButtons = {}
+local tabNames = {"Primary", "Secondary", "Melee", "Utility"}
+
+for i, tabName in ipairs(tabNames) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.24, -3, 1, 0)
+	btn.Position = UDim2.new((i-1) * 0.25, 1, 0, 0)
+	btn.BackgroundColor3 = (i == 1) and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(32, 32, 40)
+	btn.BorderSizePixel = 0
+	btn.Text = tabName
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.TextSize = 11
+	btn.Font = Enum.Font.GothamBold
+	btn.Parent = TabBar
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	tabButtons[tabName] = btn
+end
+
+local WeaponSearch = Instance.new("TextBox")
+WeaponSearch.Size = UDim2.new(1, -20, 0, 28)
+WeaponSearch.Position = UDim2.new(0, 10, 0, 42)
+WeaponSearch.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+WeaponSearch.BorderSizePixel = 0
+WeaponSearch.PlaceholderText = " Buscar arma..."
+WeaponSearch.Text = ""
+WeaponSearch.TextColor3 = Color3.fromRGB(255, 255, 255)
+WeaponSearch.PlaceholderColor3 = Color3.fromRGB(110, 110, 120)
+WeaponSearch.TextSize = 12
+WeaponSearch.Font = Enum.Font.Gotham
+WeaponSearch.Parent = WeaponPage
+Instance.new("UICorner", WeaponSearch).CornerRadius = UDim.new(0, 6)
+
+local WeaponList = Instance.new("ScrollingFrame")
+WeaponList.Size = UDim2.new(1, -20, 1, -80)
+WeaponList.Position = UDim2.new(0, 10, 0, 76)
+WeaponList.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+WeaponList.BorderSizePixel = 0
+WeaponList.ScrollBarThickness = 3
+WeaponList.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 255)
+WeaponList.CanvasSize = UDim2.new(0, 0, 0, 0)
+WeaponList.Parent = WeaponPage
+Instance.new("UICorner", WeaponList).CornerRadius = UDim.new(0, 8)
+
+local WeaponLayout = Instance.new("UIListLayout")
+WeaponLayout.SortOrder = Enum.SortOrder.Name
+WeaponLayout.Padding = UDim.new(0, 4)
+WeaponLayout.Parent = WeaponList
+
+local WeaponPadding = Instance.new("UIPadding")
+WeaponPadding.PaddingTop = UDim.new(0, 6)
+WeaponPadding.PaddingLeft = UDim.new(0, 6)
+WeaponPadding.PaddingRight = UDim.new(0, 6)
+WeaponPadding.Parent = WeaponList
+
+local CustomPage = Instance.new("Frame")
+CustomPage.Size = UDim2.new(1, 0, 1, 0)
+CustomPage.BackgroundTransparency = 1
+CustomPage.Visible = false
+CustomPage.Parent = ContentFrame
+
+local BackBtn = Instance.new("TextButton")
+BackBtn.Size = UDim2.new(0, 65, 0, 26)
+BackBtn.Position = UDim2.new(0, 10, 0, 8)
+BackBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+BackBtn.BorderSizePixel = 0
+BackBtn.Text = "← Atrás"
+BackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+BackBtn.TextSize = 11
+BackBtn.Font = Enum.Font.GothamBold
+BackBtn.Parent = CustomPage
+Instance.new("UICorner", BackBtn).CornerRadius = UDim.new(0, 6)
+
+local SelectedLabel = Instance.new("TextLabel")
+SelectedLabel.Size = UDim2.new(1, -85, 0, 26)
+SelectedLabel.Position = UDim2.new(0, 80, 0, 8)
+SelectedLabel.BackgroundTransparency = 1
+SelectedLabel.Text = "Arma: Ninguna"
+SelectedLabel.TextColor3 = Color3.fromRGB(0, 190, 255)
+SelectedLabel.TextSize = 12
+SelectedLabel.Font = Enum.Font.GothamBold
+SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SelectedLabel.Parent = CustomPage
+
+local Categories = Instance.new("Frame")
+Categories.Size = UDim2.new(1, -20, 0, 28)
+Categories.Position = UDim2.new(0, 10, 0, 40)
+Categories.BackgroundTransparency = 1
+Categories.Parent = CustomPage
+
+local categoryButtons = {}
+local cats = {"Skin", "Charm", "Wrap"}
+
+for i, cat in ipairs(cats) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.32, -3, 1, 0)
+	btn.Position = UDim2.new((i-1) * 0.333, 1, 0, 0)
+	btn.BackgroundColor3 = (i == 1) and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(32, 32, 40)
+	btn.BorderSizePixel = 0
+	btn.Text = cat
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.TextSize = 11
+	btn.Font = Enum.Font.GothamBold
+	btn.Parent = Categories
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	categoryButtons[cat] = btn
+end
+
+local ActionBar = Instance.new("Frame")
+ActionBar.Size = UDim2.new(1, -20, 0, 28)
+ActionBar.Position = UDim2.new(0, 10, 0, 74)
+ActionBar.BackgroundTransparency = 1
+ActionBar.Parent = CustomPage
+
+local RandomBtn = Instance.new("TextButton")
+RandomBtn.Size = UDim2.new(0.32, -3, 1, 0)
+RandomBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 100)
+RandomBtn.BorderSizePixel = 0
+RandomBtn.Text = "Random"
+RandomBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RandomBtn.TextSize = 11
+RandomBtn.Font = Enum.Font.GothamBold
+RandomBtn.Parent = ActionBar
+Instance.new("UICorner", RandomBtn).CornerRadius = UDim.new(0, 6)
+
+local UnequipBtn = Instance.new("TextButton")
+UnequipBtn.Size = UDim2.new(0.32, -3, 1, 0)
+UnequipBtn.Position = UDim2.new(0.333, 2, 0, 0)
+UnequipBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+UnequipBtn.BorderSizePixel = 0
+UnequipBtn.Text = "Quitar"
+UnequipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+UnequipBtn.TextSize = 11
+UnequipBtn.Font = Enum.Font.GothamBold
+UnequipBtn.Parent = ActionBar
+Instance.new("UICorner", UnequipBtn).CornerRadius = UDim.new(0, 6)
+
+local FavFilterBtn = Instance.new("TextButton")
+FavFilterBtn.Size = UDim2.new(0.32, -3, 1, 0)
+FavFilterBtn.Position = UDim2.new(0.666, 3, 0, 0)
+FavFilterBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+FavFilterBtn.BorderSizePixel = 0
+FavFilterBtn.Text = "★ Fav"
+FavFilterBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FavFilterBtn.TextSize = 11
+FavFilterBtn.Font = Enum.Font.GothamBold
+FavFilterBtn.Parent = ActionBar
+Instance.new("UICorner", FavFilterBtn).CornerRadius = UDim.new(0, 6)
+
+local SearchBox = Instance.new("TextBox")
+SearchBox.Size = UDim2.new(1, -20, 0, 28)
+SearchBox.Position = UDim2.new(0, 10, 0, 108)
+SearchBox.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+SearchBox.BorderSizePixel = 0
+SearchBox.PlaceholderText = " Buscar cosmetic..."
+SearchBox.Text = ""
+SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchBox.PlaceholderColor3 = Color3.fromRGB(110, 110, 120)
+SearchBox.TextSize = 12
+SearchBox.Font = Enum.Font.Gotham
+SearchBox.Parent = CustomPage
+Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 6)
+
+local ListFrame = Instance.new("ScrollingFrame")
+ListFrame.Size = UDim2.new(1, -20, 1, -148)
+ListFrame.Position = UDim2.new(0, 10, 0, 142)
+ListFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+ListFrame.BorderSizePixel = 0
+ListFrame.ScrollBarThickness = 3
+ListFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 255)
+ListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ListFrame.Parent = CustomPage
+Instance.new("UICorner", ListFrame).CornerRadius = UDim.new(0, 8)
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.SortOrder = Enum.SortOrder.Name
+ListLayout.Padding = UDim.new(0, 4)
+ListLayout.Parent = ListFrame
+
+local ListPadding = Instance.new("UIPadding")
+ListPadding.PaddingTop = UDim.new(0, 6)
+ListPadding.PaddingLeft = UDim.new(0, 6)
+ListPadding.PaddingRight = UDim.new(0, 6)
+ListPadding.Parent = ListFrame
+
+local Notify = Instance.new("TextLabel")
+Notify.Size = UDim2.new(0, 260, 0, 34)
+Notify.Position = UDim2.new(0.5, -130, 1, -48)
+Notify.BackgroundColor3 = Color3.fromRGB(0, 170, 90)
+Notify.BorderSizePixel = 0
+Notify.Text = ""
+Notify.TextColor3 = Color3.fromRGB(255, 255, 255)
+Notify.TextSize = 12
+Notify.Font = Enum.Font.GothamBold
+Notify.Visible = false
+Notify.Parent = MainFrame
+Instance.new("UICorner", Notify).CornerRadius = UDim.new(0, 8)
+
+local function showNotify(text)
+	Notify.Text = text
+	Notify.Visible = true
+	task.delay(2.2, function()
+		Notify.Visible = false
+	end)
+end
+
+local function refreshCosmeticList(filter)
+	for _, child in ipairs(ListFrame:GetChildren()) do
+		if child:IsA("TextButton") then child:Destroy() end
+	end
+	local count = 0
+	for name, cosmetic in pairs(CosmeticLibrary.Cosmetics) do
+		if isWeaponCosmetic(name, cosmetic) then
+			local typeMatch = false
+			local t = tostring(cosmetic.Type or ""):lower()
+			local n = name:lower()
+			if currentCategory == "Skin" and (t == "skin" or n:find("skin")) then typeMatch = true end
+			if currentCategory == "Charm" and (t == "charm" or n:find("charm")) then typeMatch = true end
+			if currentCategory == "Wrap" and (t == "wrap" or t == "wrapping" or n:find("wrap")) then typeMatch = true end
+			if typeMatch and (not filter or filter == "" or n:find(filter:lower())) then
+				if showOnlyFavorites and not favorites[name] then
+					-- skip
+				else
+					count += 1
+					local btn = Instance.new("TextButton")
+					btn.Size = UDim2.new(1, -4, 0, 32)
+					btn.BackgroundColor3 = Color3.fromRGB(32, 32, 40)
+					btn.BorderSizePixel = 0
+					btn.Text = "  " .. name
+					btn.TextColor3 = Color3.fromRGB(230, 230, 235)
+					btn.TextSize = 12
+					btn.Font = Enum.Font.Gotham
+					btn.TextXAlignment = Enum.TextXAlignment.Left
+					btn.AutoButtonColor = false
+					btn.Parent = ListFrame
+					Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+					local star = Instance.new("TextButton")
+					star.Size = UDim2.new(0, 26, 0, 26)
+					star.Position = UDim2.new(1, -30, 0.5, -13)
+					star.BackgroundTransparency = 1
+					star.Text = favorites[name] and "★" or "☆"
+					star.TextColor3 = favorites[name] and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(140, 140, 150)
+					star.TextSize = 14
+					star.Font = Enum.Font.GothamBold
+					star.Parent = btn
+
+					star.MouseButton1Click:Connect(function()
+						favorites[name] = not favorites[name]
+						if not favorites[name] then favorites[name] = nil end
+						star.Text = favorites[name] and "★" or "☆"
+						star.TextColor3 = favorites[name] and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(140, 140, 150)
+						saveConfig()
+					end)
+
+					btn.MouseEnter:Connect(function()
+						TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(0, 140, 230)}):Play()
+					end)
+					btn.MouseLeave:Connect(function()
+						TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(32, 32, 40)}):Play()
+					end)
+					btn.MouseButton1Click:Connect(function()
+						equipCosmetic(name, currentCategory)
+						btn.Text = "  ✓ " .. name
+						btn.BackgroundColor3 = Color3.fromRGB(0, 160, 90)
+						task.wait(0.35)
+						btn.Text = "  " .. name
+						btn.BackgroundColor3 = Color3.fromRGB(32, 32, 40)
+					end)
+				end
+			end
+		end
+	end
+	ListFrame.CanvasSize = UDim2.new(0, 0, 0, count * 36 + 8)
+end
+
+local function refreshWeaponList(filter)
+	for _, child in ipairs(WeaponList:GetChildren()) do
+		if child:IsA("TextButton") then child:Destroy() end
+	end
+	local weapons = WEAPON_CATEGORIES[currentWeaponTab] or {}
+	local count = 0
+	for _, weaponName in ipairs(weapons) do
+		if not filter or filter == "" or weaponName:lower():find(filter:lower()) then
+			count += 1
+			local display = "  " .. weaponName
+			if equipped[weaponName] and equipped[weaponName].Skin then
+				display = "  " .. weaponName .. "  •  " .. equipped[weaponName].Skin.Name
+			end
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1, -4, 0, 32)
+			btn.BackgroundColor3 = Color3.fromRGB(32, 32, 40)
+			btn.BorderSizePixel = 0
+			btn.Text = display
+			btn.TextColor3 = Color3.fromRGB(230, 230, 235)
+			btn.TextSize = 12
+			btn.Font = Enum.Font.Gotham
+			btn.TextXAlignment = Enum.TextXAlignment.Left
+			btn.AutoButtonColor = false
+			btn.Parent = WeaponList
+			Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+			btn.MouseEnter:Connect(function()
+				TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(0, 140, 230)}):Play()
+			end)
+			btn.MouseLeave:Connect(function()
+				TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(32, 32, 40)}):Play()
+			end)
+			btn.MouseButton1Click:Connect(function()
+				selectedWeapon = weaponName
+				SelectedLabel.Text = "Arma: " .. weaponName
+				WeaponPage.Visible = false
+				CustomPage.Visible = true
+				refreshCosmeticList("")
+			end)
+		end
+	end
+	WeaponList.CanvasSize = UDim2.new(0, 0, 0, count * 36 + 8)
+end
+
+for tabName, btn in pairs(tabButtons) do
+	btn.MouseButton1Click:Connect(function()
+		currentWeaponTab = tabName
+		for name, b in pairs(tabButtons) do
+			b.BackgroundColor3 = (name == tabName) and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(32, 32, 40)
+		end
+		refreshWeaponList(WeaponSearch.Text)
+	end)
+end
+
+BackBtn.MouseButton1Click:Connect(function()
+	CustomPage.Visible = false
+	WeaponPage.Visible = true
+	selectedWeapon = nil
+	refreshWeaponList(WeaponSearch.Text)
+end)
+
+for cat, btn in pairs(categoryButtons) do
+	btn.MouseButton1Click:Connect(function()
+		currentCategory = cat
+		for c, b in pairs(categoryButtons) do
+			b.BackgroundColor3 = (c == cat) and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(32, 32, 40)
+		end
+		refreshCosmeticList(SearchBox.Text)
+	end)
+end
+
+RandomBtn.MouseButton1Click:Connect(randomSkin)
+UnequipBtn.MouseButton1Click:Connect(unequipCurrent)
+
+FavFilterBtn.MouseButton1Click:Connect(function()
+	showOnlyFavorites = not showOnlyFavorites
+	FavFilterBtn.BackgroundColor3 = showOnlyFavorites and Color3.fromRGB(255, 180, 40) or Color3.fromRGB(50, 50, 60)
+	FavFilterBtn.Text = showOnlyFavorites and "★ On" or "★ Fav"
+	refreshCosmeticList(SearchBox.Text)
+end)
+
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+	refreshCosmeticList(SearchBox.Text)
+end)
+
+WeaponSearch:GetPropertyChangedSignal("Text"):Connect(function()
+	refreshWeaponList(WeaponSearch.Text)
+end)
+
+MinimizeBtn.MouseButton1Click:Connect(function()
+	isMinimized = not isMinimized
+	if isMinimized then
+		ContentFrame.Visible = false
+		MainFrame.Size = UDim2.new(0, 360, 0, 40)
+		MinimizeBtn.Text = "+"
+	else
+		ContentFrame.Visible = true
+		MainFrame.Size = UDim2.new(0, 360, 0, 440)
+		MinimizeBtn.Text = "–"
+	end
+end)
+
+local isOpen = false
+ToggleBtn.MouseButton1Click:Connect(function()
+	isOpen = not isOpen
+	MainFrame.Visible = isOpen
+	ToggleBtn.Text = isOpen and "Close" or "Open"
+	ToggleBtn.BackgroundColor3 = isOpen and Color3.fromRGB(220, 55, 55) or Color3.fromRGB(0, 150, 255)
+	if isOpen then
+		WeaponPage.Visible = true
+		CustomPage.Visible = false
+		refreshWeaponList("")
+	end
+end)
+
+local dragging = false
+local dragStart, startPos
+
+local function makeDraggable(frame)
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = MainFrame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+end
+
+makeDraggable(TitleBar)
+makeDraggable(ToggleBtn)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+loadConfig()
